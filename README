@@ -1,0 +1,31 @@
+NAME
+    Catalyst::View::TT - Template View Class
+
+SYNOPSIS
+        # lib/MyApp/View/TT.pm
+        package MyApp::View::TT;
+
+        use base 'Catalyst::View::TT';
+
+        1;
+
+        $c->forward('MyApp::View::TT');
+
+DESCRIPTION
+    This is the "Template" view class.
+
+  OVERLOADED METHODS
+   process
+    Renders the template specified in $c->stash->{template} or
+    $c->request->action to $c->response->output.
+
+SEE ALSO
+    Catalyst.
+
+AUTHOR
+    Sebastian Riedel, "sri@cpan.org"
+
+COPYRIGHT
+    This program is free software, you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
