@@ -17,7 +17,7 @@ DESCRIPTION
   OVERLOADED METHODS
    process
     Renders the template specified in $c->stash->{template} or
-    $c->request->action to $c->response->output.
+    $c->request->match to $c->response->output.
 
 SEE ALSO
     Catalyst.

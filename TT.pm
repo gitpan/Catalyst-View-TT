@@ -6,7 +6,7 @@ use Template;
 use Template::Timer;
 use NEXT;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 __PACKAGE__->mk_accessors(qw/template provider/);
 
@@ -46,23 +46,23 @@ sub new {
 
 =head3 process
 
-Renders the template specified in $c->stash->{template} or $c->request->action
+Renders the template specified in $c->stash->{template} or $c->request->match
 to $c->response->output.
 
 =cut
 
 sub process {
     my ( $self, $c ) = @_;
-    $c->response->headers->content_type('text/html;charset=utf8');
+    $c->res->headers->content_type('text/html;charset=utf8');
     my $output;
-    my $name = $c->stash->{template} || $c->request->action;
+    my $name = $c->stash->{template} || $c->req->match;
     $c->log->debug(qq/Rendering template "$name"/) if $c->debug;
     unless (
         $self->template->process(
             $name,
             {
                 %{ $c->stash },
-                base => $c->request->base,
+                base => $c->req->base,
                 c    => $c,
                 name => $c->config->{name}
             },
@@ -75,7 +75,7 @@ sub process {
         $c->log->error($error);
         $c->errors($error);
     }
-    $c->response->output($output);
+    $c->res->output($output);
     return 1;
 }
 
