@@ -6,7 +6,7 @@ use Template;
 use Template::Timer;
 use NEXT;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 __PACKAGE__->mk_accessors(qw/template provider/);
 
@@ -56,6 +56,10 @@ sub process {
     $c->res->headers->content_type('text/html;charset=utf8');
     my $output;
     my $name = $c->stash->{template} || $c->req->match;
+    unless ($name) {
+        $c->log->debug('No template specified for rendering') if $c->debug;
+        return 0;
+    }
     $c->log->debug(qq/Rendering template "$name"/) if $c->debug;
     unless (
         $self->template->process(
