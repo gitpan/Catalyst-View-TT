@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::View::TT.
 
+0.04  Sun Feb 27 22:00:00 2005
+        - better debug messages (Marcus Ramberg)
+
 0.03  Thu Feb 17 22:00:00 2005
         - don't try to render something without a template
 

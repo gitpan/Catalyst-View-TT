@@ -1,14 +1,17 @@
 package Catalyst::View::TT;
 
 use strict;
-use base 'Catalyst::Base';
+use base qw/Catalyst::Base Class::Data::Inheritable/;
 use Template;
 use Template::Timer;
 use NEXT;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
-__PACKAGE__->mk_accessors(qw/template provider/);
+__PACKAGE__->mk_accessors('template');
+__PACKAGE__->mk_classdata('config');
+
+__PACKAGE__->config( { EVAL_PERL => 1 } );
 
 =head1 NAME
 
@@ -21,8 +24,10 @@ Catalyst::View::TT - Template View Class
 
     use base 'Catalyst::View::TT';
 
-    1;
+    __PACKAGE__->config->{DEBUG} = 'all';
 
+    1;
+    
     $c->forward('MyApp::View::TT');
 
 =head1 DESCRIPTION
@@ -34,11 +39,12 @@ This is the C<Template> view class.
 =cut
 
 sub new {
-    my $self = shift;
-    my $c    = shift;
-    $self = $self->NEXT::new(@_);
-    my $root = $c->config->{root};
-    my %config = ( EVAL_PERL => 1, INCLUDE_PATH => [ $root, "$root/base" ] );
+    my $class  = shift;
+    my $c      = shift;
+    my $self   = $class->NEXT::new(@_);
+    my $root   = $c->config->{root};
+    my %config =
+      ( %{ $class->config }, INCLUDE_PATH => [ $root, "$root/base" ] );
     $config{CONTEXT} = Template::Timer->new(%config) if $c->debug;
     $self->template( Template->new( \%config ) );
     return $self;
@@ -83,6 +89,13 @@ sub process {
     return 1;
 }
 
+=head3 config
+
+This allows your view subclass to pass additional settings to the
+TT config hash.
+
+=cut 
+
 =head1 SEE ALSO
 
 L<Catalyst>.
@@ -90,6 +103,7 @@ L<Catalyst>.
 =head1 AUTHOR
 
 Sebastian Riedel, C<sri@cpan.org>
+Marcus Ramberg
 
 =head1 COPYRIGHT
 
