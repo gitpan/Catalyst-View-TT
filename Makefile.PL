@@ -4,9 +4,9 @@ WriteMakefile(
     NAME      => 'Catalyst::View::TT',
     AUTHOR    => 'Sebastian Riedel (sri@oook.de)',
     PREREQ_PM => {
-        Catalyst        => '2.99',
+        Catalyst        => '4.00',
         Template        => 0,
         Template::Timer => 0
     },
-    VERSION_FROM => 'TT.pm'
+    VERSION_FROM => 'lib/Catalyst/View/TT.pm'
 );

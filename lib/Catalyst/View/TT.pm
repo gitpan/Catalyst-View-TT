@@ -6,7 +6,7 @@ use Template;
 use Template::Timer;
 use NEXT;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 __PACKAGE__->mk_accessors('template');
 __PACKAGE__->mk_classdata('config');
@@ -18,6 +18,9 @@ __PACKAGE__->config( { EVAL_PERL => 1 } );
 Catalyst::View::TT - Template View Class
 
 =head1 SYNOPSIS
+
+    # use the helper
+    create view TT TT
 
     # lib/MyApp/View/TT.pm
     package MyApp::View::TT;
