@@ -37,8 +37,8 @@ Sebastian Riedel, C<sri@oook.de>
 
 =head1 LICENSE
 
-This library is free software . You can redistribute it and/or modify it under
-the same terms as perl itself.
+This library is free software . You can redistribute it and/or modify
+it under the same terms as perl itself.
 
 =cut
 
@@ -58,20 +58,20 @@ use base 'Catalyst::View::TT';
 
 =head1 SYNOPSIS
 
-    Very simple to use
+See L<[% app %]>
 
 =head1 DESCRIPTION
 
-Very nice component.
+TT View Component.
 
 =head1 AUTHOR
 
-Clever guy
+[% author %]
 
 =head1 LICENSE
 
-This library is free software . You can redistribute it and/or modify it under
-the same terms as perl itself.
+This library is free software . You can redistribute it and/or modify
+it under the same terms as perl itself.
 
 =cut
 
