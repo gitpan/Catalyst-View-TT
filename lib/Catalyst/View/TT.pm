@@ -6,7 +6,7 @@ use Template;
 use Template::Timer;
 use NEXT;
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 __PACKAGE__->mk_accessors('template');
 __PACKAGE__->mk_accessors('include_path');
@@ -235,37 +235,37 @@ and reads the application config.
 
 sub _coerce_paths {
     my ( $paths, $dlim ) = shift;
-    return () if ( ! $paths );
-    return @{$paths} if ( ref $paths eq 'ARRAY');
-    if ( ! ref $paths ){
-            # tweak delim to ignore C:/
-            unless (defined $dlim) {
-                $dlim = ($^O eq 'MSWin32') ? ':(?!\\/)' : ':';
-            }
-            return split(/$dlim/, $paths);
-    }
-}
+    return () if ( !$paths );
+    return @{$paths} if ( ref $paths eq 'ARRAY' );
 
+    # tweak delim to ignore C:/
+    unless ( defined $dlim ) {
+        $dlim = ( $^O eq 'MSWin32' ) ? ':(?!\\/)' : ':';
+    }
+    return split( /$dlim/, $paths );
+}
 
 sub new {
     my ( $class, $c, $arguments ) = @_;
-    my $delim = $class->config->{DELIMITER} || $arguments->{DELIMITER};
-    my @include_path = _coerce_paths($arguments->{INCLUDE_PATH}, $delim); 
-    if(!@include_path){
-        @include_path = _coerce_paths($class->config->{INCLUDE_PATH}, $delim);
-    }
-    if(!@include_path){
-        my $root = $c->config->{root};
-        my $base = Path::Class::dir($root, 'base');
-        @include_path = ( "$root", "$base" );
-    }
     my $config = {
         EVAL_PERL          => 0,
         TEMPLATE_EXTENSION => '',
         %{ $class->config },
         %{$arguments},
-        INCLUDE_PATH => \@include_path,
     };
+    if ( ! (ref $config->{INCLUDE_PATH} eq 'ARRAY') ) {
+        my $delim = $config->{DELIMITER};
+        my @include_path
+            = _coerce_paths( $config->{INCLUDE_PATH}, $delim );
+        if ( !@include_path ) {
+            my $root = $c->config->{root};
+            my $base = Path::Class::dir( $root, 'base' );
+            @include_path = ( "$root", "$base" );
+        }
+        $config->{INCLUDE_PATH} = \@include_path;
+    }
+
+
 
     # if we're debugging and/or the TIMER option is set, then we install
     # Template::Timer as a custom CONTEXT object, but only if we haven't
@@ -274,7 +274,8 @@ sub new {
     if ( $config->{TIMER} ) {
         if ( $config->{CONTEXT} ) {
             $c->log->error(
-                'Cannot use Template::Timer - a TT CONFIG is already defined');
+                'Cannot use Template::Timer - a TT CONFIG is already defined'
+            );
         }
         else {
             $config->{CONTEXT} = Template::Timer->new(%$config);
@@ -285,20 +286,35 @@ sub new {
         use Data::Dumper;
         $c->log->debug( "TT Config: ", Dumper($config) );
     }
+    if ( $config->{PROVIDERS} ) {
+        my @providers = ();
+        if ( ref($config->{PROVIDERS}) eq 'ARRAY') {
+            foreach my $p (@{$config->{PROVIDERS}}) {
+                my $pname = $p->{name};
+                eval "require Template::Provider::$pname";
+                if(!$@) {
+                    push @providers, "Template::Provider::${pname}"->new($p->{args});
+                }
+            }
+        }
+        delete $config->{PROVIDERS};
+        if(@providers) {
+            $config->{LOAD_TEMPLATES} = \@providers;
+        }
+    }
 
     my $self = $class->NEXT::new(
         $c,
-        {
-            template => Template->new($config) || do {
+        {   template => Template->new($config) || do {
                 my $error = Template->error();
                 $c->log->error($error);
                 $c->error($error);
                 return undef;
-              },
-        %{$config},
+            },
+            %{$config},
         },
     );
-    $self->include_path(\@include_path);
+    $self->include_path($config->{INCLUDE_PATH});
     $self->config($config);
 
     return $self;
@@ -322,7 +338,8 @@ sub process {
     my ( $self, $c ) = @_;
 
     my $template = $c->stash->{template}
-      || $c->request->match . $self->config->{TEMPLATE_EXTENSION};
+      || ( $c->request->match || $c->request->action )
+      . $self->config->{TEMPLATE_EXTENSION};
 
     unless ($template) {
         $c->log->debug('No template specified for rendering') if $c->debug;
@@ -332,20 +349,11 @@ sub process {
     $c->log->debug(qq/Rendering template "$template"/) if $c->debug;
 
     my $output;
-    my $cvar = $self->config->{CATALYST_VAR};
-    my $vars = {
-        defined $cvar
-        ? ( $cvar => $c )
-        : (
-            c    => $c,
-            base => $c->req->base,
-            name => $c->config->{name}
-        ),
-        %{ $c->stash() }
-    };
-    
-    my @tmp_path = @{$self->include_path};
-    unshift @{$self->include_path}, @{$c->stash->{additional_template_paths}} if ref $c->stash->{additional_template_paths};
+    my $vars = { $self->template_vars($c) };
+
+    unshift @{ $self->include_path },
+      @{ $c->stash->{additional_template_paths} }
+      if ref $c->stash->{additional_template_paths};
     unless ( $self->template->process( $template, $vars, \$output ) ) {
         my $error = $self->template->error;
         $error = qq/Couldn't render template "$error"/;
@@ -353,8 +361,10 @@ sub process {
         $c->error($error);
         return 0;
     }
-    @{$self->include_path} = @tmp_path if ref $c->stash->{additional_template_paths};
-   
+    splice @{ $self->include_path }, 0,
+      scalar @{ $c->stash->{additional_template_paths} }
+      if ref $c->stash->{additional_template_paths};
+
     unless ( $c->response->content_type ) {
         $c->response->content_type('text/html; charset=utf-8');
     }
@@ -364,6 +374,28 @@ sub process {
     return 1;
 }
 
+=item template_vars
+
+Returns a list of keys/values to be used as the variables in the
+template.
+
+=cut
+
+sub template_vars {
+    my ( $self, $c ) = @_;
+
+    my $cvar = $self->config->{CATALYST_VAR};
+
+    defined $cvar
+      ? ( $cvar => $c )
+      : (
+        c    => $c,
+        base => $c->req->base,
+        name => $c->config->{name}
+      ),
+      %{ $c->stash() }
+
+}
 =item config
 
 This method allows your view subclass to pass additional settings to
