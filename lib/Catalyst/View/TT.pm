@@ -6,7 +6,7 @@ use Template;
 use Template::Timer;
 use NEXT;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 __PACKAGE__->mk_accessors('template');
 __PACKAGE__->mk_accessors('include_path');
@@ -22,10 +22,10 @@ Catalyst::View::TT - Template View Class
 
 # configure in lib/MyApp.pm
 
-    MyApp->config({
+    MyApp->config(
         name     => 'MyApp',
         root     => MyApp->path_to('root');,
-        'V::TT' => {
+        'View::TT' => {
             # any TT configurations items go here
             INCLUDE_PATH => [
               MyApp->path_to( 'root', 'src' ), 
@@ -39,7 +39,7 @@ Catalyst::View::TT - Template View Class
             CATALYST_VAR => 'Catalyst',
             TIMER        => 1,
         },
-    });
+    );
          
 # render view from lib/MyApp.pm or lib/MyApp::C::SomeController.pm
     
@@ -169,12 +169,28 @@ latter methods.
 
 =head2 DYNAMIC INCLUDE_PATH
 
-It is sometimes needed to dynamically add additional paths to the 
-INCLUDE_PATH variable of the template object. This can be done by setting
-'additional_include_paths' on stash to a referrence to an array with 
-additional paths:
+Sometimes it is desirable to modify INCLUDE_PATH for your templates at run time.
+ 
+Additional paths can be added to the start of INCLUDE_PATH via the stash as
+follows:
 
-    $c->stash->{additional_template_paths} = [$c->config->{root} . '/test_include_path']; 
+    $c->stash->{additional_template_paths} =
+        [$c->config->{root} . '/test_include_path'];
+
+If you need to add paths to the end of INCLUDE_PATH, there is also an
+include_path() accessor available:
+
+    push( @{ $c->view('TT')->include_path }, qw/path/ );
+
+Note that if you use include_path() to add extra paths to INCLUDE_PATH, you
+MUST check for duplicate paths. Without such checking, the above code will add
+"path" to INCLUDE_PATH at every request, causing a memory leak.
+
+A safer approach is to use include_path() to overwrite the array of paths
+rather than adding to it. This eliminates both the need to perform duplicate
+checking and the chance of a memory leak:
+
+    @{ $c->view('TT')->include_path } = qw/path another_path/;
 
 =head2 RENDERING VIEWS
 
@@ -323,10 +339,10 @@ sub new {
 =item process
 
 Renders the template specified in C<$c-E<gt>stash-E<gt>{template}> or
-C<$c-E<gt>request-E<gt>match>. Template variables are set up from the
-contents of C<$c-E<gt>stash>, augmented with C<base> set to
-C<$c-E<gt>req-E<gt>base>, C<c> to C<$c> and C<name> to
-C<$c-E<gt>config-E<gt>{name}>. Alternately, the C<CATALYST_VAR>
+C<$c-E<gt>action> (the private name of the matched action. 
+Template variables are set up from the contents of C<$c-E<gt>stash>, 
+augmented with C<base> set to C<$c-E<gt>req-E<gt>base>, C<c> to C<$c> and 
+C<name> to C<$c-E<gt>config-E<gt>{name}>. Alternately, the C<CATALYST_VAR>
 configuration item can be defined to specify the name of a template
 variable through which the context reference (C<$c>) can be accessed.
 In this case, the C<c>, C<base> and C<name> variables are omitted.
@@ -338,8 +354,7 @@ sub process {
     my ( $self, $c ) = @_;
 
     my $template = $c->stash->{template}
-      || ( $c->request->match || $c->request->action )
-      . $self->config->{TEMPLATE_EXTENSION};
+      ||  $c->action . $self->config->{TEMPLATE_EXTENSION};
 
     unless ($template) {
         $c->log->debug('No template specified for rendering') if $c->debug;
