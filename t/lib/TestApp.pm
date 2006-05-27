@@ -50,6 +50,27 @@ sub test_includepath : Local {
     }
 }
 
+sub test_render : Local {
+    my ($self, $c) = @_;
+
+    my $out = $c->stash->{message} = $c->view('TT')->render($c, $c->req->param('template'), {param => $c->req->param('param') || ''});
+    if (UNIVERSAL::isa($out, 'Template::Exception')) {
+        $c->response->body($out);
+        $c->response->status(403);
+    } else {
+        $c->stash->{template} = 'test.tt';
+    }
+
+}
+
+sub test_msg : Local {
+    my ($self, $c) = @_;
+    my $tmpl = $c->req->param('msg');
+    
+    $c->stash->{message} = $c->view('TT')->render($c, \$tmpl);
+    $c->stash->{template} = 'test.tt';
+}
+
 sub end : Private {
     my ($self, $c) = @_;
 
