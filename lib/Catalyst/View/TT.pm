@@ -7,7 +7,7 @@ use Template;
 use Template::Timer;
 use NEXT;
 
-our $VERSION = '0.26';
+our $VERSION = '0.27';
 
 __PACKAGE__->mk_accessors('template');
 __PACKAGE__->mk_accessors('include_path');
@@ -23,7 +23,7 @@ Catalyst::View::TT - Template View Class
 # use the helper to create your View
     myapp_create.pl view TT TT
 
-# configure in lib/MyApp.pm
+# configure in lib/MyApp.pm (Could be set from configfile instead)
 
     MyApp->config(
         name     => 'MyApp',
@@ -34,13 +34,12 @@ Catalyst::View::TT - Template View Class
               MyApp->path_to( 'root', 'src' ), 
               MyApp->path_to( 'root', 'lib' ), 
             ],
+            TEMPLATE_EXTENSION => '.tt',
+            CATALYST_VAR => 'c',
+            TIMER        => 0,
+            # Not set by default
             PRE_PROCESS        => 'config/main',
             WRAPPER            => 'site/wrapper',
-            TEMPLATE_EXTENSION => '.tt',
-
-            # two optional config items
-            CATALYST_VAR => 'Catalyst',
-            TIMER        => 1,
         },
     );
          
@@ -119,35 +118,6 @@ sub new {
     if ( $c->debug && $config->{DUMP_CONFIG} ) {
         $c->log->debug( "TT Config: ", dump($config) );
     }
-    if ( $config->{PROVIDERS} ) {
-        my @providers = ();
-        if ( ref($config->{PROVIDERS}) eq 'ARRAY') {
-            foreach my $p (@{$config->{PROVIDERS}}) {
-                my $pname = $p->{name};
-                my $prov = 'Template::Provider';
-                if($pname eq '_file_')
-                {
-                    $p->{args} = { %$config };
-                }
-                else
-                {
-                    $prov .="::$pname" if($pname ne '_file_');
-                }
-                eval "require $prov";
-                if(!$@) {
-                    push @providers, "$prov"->new($p->{args});
-                }
-                else
-                {
-                    $c->log->warn("Can't load $prov, ($@)");
-                }
-            }
-        }
-        delete $config->{PROVIDERS};
-        if(@providers) {
-            $config->{LOAD_TEMPLATES} = \@providers;
-        }
-    }
 
     my $self = $class->NEXT::new(
         $c, { %$config }, 
@@ -166,6 +136,50 @@ sub new {
     my $copy = $self;
     Scalar::Util::weaken($copy);
     $config->{INCLUDE_PATH} = [ sub { $copy->paths } ];
+
+    if ( $config->{PROVIDERS} ) {
+        my @providers = ();
+        if ( ref($config->{PROVIDERS}) eq 'ARRAY') {
+            foreach my $p (@{$config->{PROVIDERS}}) {
+                my $pname = $p->{name};
+                my $prov = 'Template::Provider';
+                if($pname eq '_file_')
+                {
+                    $p->{args} = { %$config };
+                }
+                else
+                {
+                    if($pname =~ s/^\+//) {
+                        $prov = $pname;
+                    }
+                    else
+                    {
+                        $prov .= "::$pname";
+                    }
+                    # We copy the args people want from the config
+                    # to the args
+                    $p->{args} ||= {};
+                    if ($p->{copy_config}) {
+                        map  { $p->{args}->{$_} = $config->{$_}  }
+                                   grep { exists $config->{$_} }
+                                   @{ $p->{copy_config} };
+                    }
+                }
+                eval "require $prov";
+                if(!$@) {
+                    push @providers, "$prov"->new($p->{args});
+                }
+                else
+                {
+                    $c->log->warn("Can't load $prov, ($@)");
+                }
+            }
+        }
+        delete $config->{PROVIDERS};
+        if(@providers) {
+            $config->{LOAD_TEMPLATES} = \@providers;
+        }
+    }
     
     $self->{template} = 
         Template->new($config) || do {
@@ -544,6 +558,51 @@ For example:
 
 Would by default look for a template in <root>/test/test. If you set TEMPLATE_EXTENSION to '.tt', it will look for
 <root>/test/test.tt.
+
+=head2 C<PROVIDERS>
+
+Allows you to specify the template providers that TT will use.
+
+    MyApp->config({
+        name     => 'MyApp',
+        root     => MyApp->path_to('root'),
+        'V::TT' => {
+            PROVIDERS => [
+                {
+                    name    => 'DBI',
+                    args    => {
+                        DBI_DSN => 'dbi:DB2:books',
+                        DBI_USER=> 'foo'
+                    }
+                }, {
+                    name    => '_file_',
+                    args    => {}
+                }
+            ]
+        },
+    });
+
+The 'name' key should correspond to the class name of the provider you
+want to use.  The _file_ name is a special case that represents the default
+TT file-based provider.  By default the name is will be prefixed with
+'Template::Provider::'.  You can fully qualify the name by using a unary
+plus:
+
+    name => '+MyApp::Provider::Foo'
+
+You can also specify the 'copy_config' key as an arrayref, to copy those keys
+from the general config, into the config for the provider:
+    
+    DEFAULT_ENCODING    => 'utf-8',
+    PROVIDERS => [
+        {
+            name    => 'Encoding',
+            copy_config => [qw(DEFAULT_ENCODING INCLUDE_PATH)]
+        }
+    ]
+    
+This can prove useful when you want to use the additional_template_paths hack
+in your own provider, or if you need to use Template::Provider::Encoding
 
 =head2 HELPERS
 
