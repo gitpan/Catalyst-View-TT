@@ -2,29 +2,28 @@ NAME
     Catalyst::View::TT - Template View Class
 
 SYNOPSIS
-    # use the helper to create View myapp_create.pl view TT TT
+    # use the helper to create your View myapp_create.pl view TT TT
 
-    # configure in lib/MyApp.pm
+    # configure in lib/MyApp.pm (Could be set from configfile instead)
 
-        MyApp->config({
+        MyApp->config(
             name     => 'MyApp',
-            root     => MyApp->path_to('root');,
-            'V::TT' => {
+            root     => MyApp->path_to('root'),
+            'View::TT' => {
                 # any TT configurations items go here
                 INCLUDE_PATH => [
                   MyApp->path_to( 'root', 'src' ), 
                   MyApp->path_to( 'root', 'lib' ), 
                 ],
+                TEMPLATE_EXTENSION => '.tt',
+                CATALYST_VAR => 'c',
+                TIMER        => 0,
+                # Not set by default
                 PRE_PROCESS        => 'config/main',
                 WRAPPER            => 'site/wrapper',
-                TEMPLATE_EXTENSION => '.tt',
-
-                # two optional config items
-                CATALYST_VAR => 'Catalyst',
-                TIMER        => 1,
             },
-        });
-         
+        );
+
     # render view from lib/MyApp.pm or lib/MyApp::C::SomeController.pm
 
         sub message : Global {
@@ -37,13 +36,13 @@ SYNOPSIS
     # access variables from template
 
         The message is: [% message %].
-    
-        # example when CATALYST_VAR is set to 'Catalyst'
+        
+    # example when CATALYST_VAR is set to 'Catalyst'
         Context is [% Catalyst %]          
         The base is [% Catalyst.req.base %] 
         The name is [% Catalyst.config.name %] 
-    
-        # example when CATALYST_VAR isn't set
+        
+    # example when CATALYST_VAR isn't set
         Context is [% c %]
         The base is [% base %]
         The name is [% name %]
@@ -62,8 +61,8 @@ DESCRIPTION
     something like this:
 
         package FooBar::V::TT;
-    
-        use strict;
+        
+    use strict;
          use base 'Catalyst::View::TT';
 
         __PACKAGE__->config->{DEBUG} = 'all';
@@ -74,8 +73,8 @@ DESCRIPTION
     to the TT view class.
 
         # In MyApp or MyApp::Controller::SomeController
-    
-        sub end : Private {
+        
+    sub end : Private {
             my( $self, $c ) = @_;
             $c->forward('MyApp::V::TT');
         }
@@ -86,8 +85,8 @@ DESCRIPTION
     when the module is first loaded.
 
         package MyApp::V::TT;
-    
-        use strict;
+        
+    use strict;
         use base 'Catalyst::View::TT';
 
         MyApp::V::TT->config({
@@ -102,8 +101,8 @@ DESCRIPTION
     The second way is to define a "new()" method in your view subclass. This
     performs the configuration when the view object is created, shortly
     after being loaded. Remember to delegate to the base class "new()"
-    method (via "$self->NEXT::new()" in the example below) after performing
-    any configuration.
+    method (via "$self->next::method()" in the example below) after
+    performing any configuration.
 
         sub new {
             my $self = shift;
@@ -115,22 +114,22 @@ DESCRIPTION
                 PRE_PROCESS  => 'config/main',
                 WRAPPER      => 'site/wrapper',
             });
-            return $self->NEXT::new(@_);
+            return $self->next::method(@_);
         }
- 
+
     The final, and perhaps most direct way, is to define a class item in
     your main application configuration, again by calling the uniquitous
     "config()" method. The items in the class hash are added to those
     already defined by the above two methods. This happens in the base class
     new() method (which is one reason why you must remember to call it via
-    "NEXT" if you redefine the "new()" method in a subclass).
+    "MRO::Compat" if you redefine the "new()" method in a subclass).
 
         package MyApp;
-    
-        use strict;
+        
+    use strict;
         use Catalyst;
-    
-        MyApp->config({
+        
+    MyApp->config({
             name     => 'MyApp',
             root     => MyApp->path_to('root'),
             'V::TT' => {
@@ -148,12 +147,35 @@ DESCRIPTION
     methods.
 
   DYNAMIC INCLUDE_PATH
-    It is sometimes needed to dynamically add additional paths to the
-    INCLUDE_PATH variable of the template object. This can be done by
-    setting 'additional_include_paths' on stash to a referrence to an array
-    with additional paths:
+    Sometimes it is desirable to modify INCLUDE_PATH for your templates at
+    run time.
 
-        $c->stash->{additional_template_paths} = [$c->config->{root} . '/test_include_path']; 
+    Additional paths can be added to the start of INCLUDE_PATH via the stash
+    as follows:
+
+        $c->stash->{additional_template_paths} =
+            [$c->config->{root} . '/test_include_path'];
+
+    If you need to add paths to the end of INCLUDE_PATH, there is also an
+    include_path() accessor available:
+
+        push( @{ $c->view('TT')->include_path }, qw/path/ );
+
+    Note that if you use include_path() to add extra paths to INCLUDE_PATH,
+    you MUST check for duplicate paths. Without such checking, the above
+    code will add "path" to INCLUDE_PATH at every request, causing a memory
+    leak.
+
+    A safer approach is to use include_path() to overwrite the array of
+    paths rather than adding to it. This eliminates both the need to perform
+    duplicate checking and the chance of a memory leak:
+
+        @{ $c->view('TT')->include_path } = qw/path another_path/;
+
+    If you are calling "render" directly then you can specify dynamic paths
+    by having a "additional_template_paths" key with a value of additonal
+    directories to search. See "CAPTURING TEMPLATE OUTPUT" for an example
+    showing this.
 
   RENDERING VIEWS
     The view plugin renders the template specified in the "template" item in
@@ -165,16 +187,20 @@ DESCRIPTION
             $c->forward('MyApp::V::TT');
         }
 
-    If a class item isn't defined, then it instead uses the current match,
-    as returned by "$c->match". In the above example, this would be
-    "message".
+    If a stash item isn't defined, then it instead uses the stringification
+    of the action dispatched to (as defined by $c->action) in the above
+    example, this would be "message", but because the default is to append
+    '.tt', it would load "root/message.tt".
 
     The items defined in the stash are passed to the Template Toolkit for
     use as template variables.
 
-    sub message : Global { sub default : Private { my ( $self, $c ) = @_;
-    $c->stash->{template} = 'message.tt2'; $c->stash->{message} = 'Hello
-    World!'; $c->forward('MyApp::V::TT'); }
+        sub default : Private {
+            my ( $self, $c ) = @_;
+            $c->stash->{template} = 'message.tt2';
+            $c->stash->{message}  = 'Hello World!';
+            $c->forward('MyApp::V::TT');
+        }
 
     A number of other template variables are also added:
 
@@ -190,77 +216,162 @@ DESCRIPTION
         The base is [% base %]
         The name is [% name %]
 
-    The output generated by the template is stored in
-    "$c->response->output".
+    The output generated by the template is stored in "$c->response->body".
+
+  CAPTURING TEMPLATE OUTPUT
+    If you wish to use the output of a template for some other purpose than
+    displaying in the response, e.g. for sending an email, this is possible
+    using Catalyst::Plugin::Email and the render method:
+
+      sub send_email : Local {
+        my ($self, $c) = @_;
+        
+    $c->email(
+          header => [
+            To      => 'me@localhost',
+            Subject => 'A TT Email',
+          ],
+          body => $c->view('TT')->render($c, 'email.tt', {
+            additional_template_paths => [ $c->config->{root} . '/email_templates'],
+            email_tmpl_param1 => 'foo'
+            }
+          ),
+        );
+      # Redirect or display a message
+      }
 
   TEMPLATE PROFILING
+    See "TIMER" property of the config method.
+
   METHODS
-    new The constructor for the TT view. Sets up the template provider, and
-        reads the application config.
+  new
+    The constructor for the TT view. Sets up the template provider, and
+    reads the application config.
 
-    process
-        Renders the template specified in "$c->stash->{template}" or
-        "$c->request->match". Template variables are set up from the
-        contents of "$c->stash", augmented with "base" set to
-        "$c->req->base", "c" to $c and "name" to "$c->config->{name}".
-        Alternately, the "CATALYST_VAR" configuration item can be defined to
-        specify the name of a template variable through which the context
-        reference ($c) can be accessed. In this case, the "c", "base" and
-        "name" variables are omitted. Output is stored in
-        "$c->response->output".
+  process
+    Renders the template specified in "$c->stash->{template}" or
+    "$c->action" (the private name of the matched action. Calls render to
+    perform actual rendering. Output is stored in "$c->response->body".
 
-    config
-        This method allows your view subclass to pass additional settings to
-        the TT configuration hash, or to set the options as below:
+  render($c, $template, \%args)
+    Renders the given template and returns output, or a Template::Exception
+    object upon error.
 
-        "CATALYST_VAR"
-          Allows you to change the name of the Catalyst context object. If
-          set, it will also remove the base and name aliases, so you will
-          have access them through <context>.
+    The template variables are set to %$args if $args is a hashref, or
+    $"$c->stash" otherwise. In either case the variables are augmented with
+    "base" set to " << $c-"req->base >>, "c" to $c and "name" to
+    "$c->config->{name}". Alternately, the "CATALYST_VAR" configuration item
+    can be defined to specify the name of a template variable through which
+    the context reference ($c) can be accessed. In this case, the "c",
+    "base" and "name" variables are omitted.
 
-          For example:
+    $template can be anything that Template::process understands how to
+    process, including the name of a template file or a reference to a test
+    string. See Template::process for a full list of supported formats.
 
-              MyApp->config({
-                  name     => 'MyApp',
-                  root     => MyApp->path_to('root'),
-                  'V::TT' => {
-                      CATALYST_VAR => 'Catalyst',
-                  },
-              });
+  template_vars
+    Returns a list of keys/values to be used as the catalyst variables in
+    the template.
 
-          message.tt2:
+  config
+    This method allows your view subclass to pass additional settings to the
+    TT configuration hash, or to set the options as below:
 
-              The base is [% Catalyst.req.base %]
-              The name is [% Catalyst.config.name %]
+  paths
+    The list of paths TT will look for templates in.
 
-        "TIMER"
-          If you have configured Catalyst for debug output, and turned on
-          the TIMER setting, "Catalyst::View::TT" will enable profiling of
-          template processing (using Template::Timer). This will embed HTML
-          comments in the output from your templates, such as:
+  "CATALYST_VAR"
+    Allows you to change the name of the Catalyst context object. If set, it
+    will also remove the base and name aliases, so you will have access them
+    through <context>.
 
-              <!-- TIMER START: process mainmenu/mainmenu.ttml -->
-              <!-- TIMER START: include mainmenu/cssindex.tt -->
-              <!-- TIMER START: process mainmenu/cssindex.tt -->
-              <!-- TIMER END: process mainmenu/cssindex.tt (0.017279 seconds) -->
-              <!-- TIMER END: include mainmenu/cssindex.tt (0.017401 seconds) -->
+    For example:
 
-              ....
+        MyApp->config({
+            name     => 'MyApp',
+            root     => MyApp->path_to('root'),
+            'V::TT' => {
+                CATALYST_VAR => 'Catalyst',
+            },
+        });
 
-              <!-- TIMER END: process mainmenu/footer.tt (0.003016 seconds) -->
+    message.tt2:
 
-        "TEMPLATE_EXTENSION"
-          a sufix to add when looking for templates bases on the "match"
-          method in Catalyst::Request.
+        The base is [% Catalyst.req.base %]
+        The name is [% Catalyst.config.name %]
 
-          For example:
+  "TIMER"
+    If you have configured Catalyst for debug output, and turned on the
+    TIMER setting, "Catalyst::View::TT" will enable profiling of template
+    processing (using Template::Timer). This will embed HTML comments in the
+    output from your templates, such as:
 
-            package MyApp::C::Test;
-            sub test : Local { .. } 
+        <!-- TIMER START: process mainmenu/mainmenu.ttml -->
+        <!-- TIMER START: include mainmenu/cssindex.tt -->
+        <!-- TIMER START: process mainmenu/cssindex.tt -->
+        <!-- TIMER END: process mainmenu/cssindex.tt (0.017279 seconds) -->
+        <!-- TIMER END: include mainmenu/cssindex.tt (0.017401 seconds) -->
 
-          Would by default look for a template in <root>/test/test. If you
-          set TEMPLATE_EXTENSION to '.tt', it will look for
-          <root>/test/test.tt.
+        ....
+
+        <!-- TIMER END: process mainmenu/footer.tt (0.003016 seconds) -->
+
+  "TEMPLATE_EXTENSION"
+    a sufix to add when looking for templates bases on the "match" method in
+    Catalyst::Request.
+
+    For example:
+
+      package MyApp::C::Test;
+      sub test : Local { .. }
+
+    Would by default look for a template in <root>/test/test. If you set
+    TEMPLATE_EXTENSION to '.tt', it will look for <root>/test/test.tt.
+
+  "PROVIDERS"
+    Allows you to specify the template providers that TT will use.
+
+        MyApp->config({
+            name     => 'MyApp',
+            root     => MyApp->path_to('root'),
+            'V::TT' => {
+                PROVIDERS => [
+                    {
+                        name    => 'DBI',
+                        args    => {
+                            DBI_DSN => 'dbi:DB2:books',
+                            DBI_USER=> 'foo'
+                        }
+                    }, {
+                        name    => '_file_',
+                        args    => {}
+                    }
+                ]
+            },
+        });
+
+    The 'name' key should correspond to the class name of the provider you
+    want to use. The _file_ name is a special case that represents the
+    default TT file-based provider. By default the name is will be prefixed
+    with 'Template::Provider::'. You can fully qualify the name by using a
+    unary plus:
+
+        name => '+MyApp::Provider::Foo'
+
+    You can also specify the 'copy_config' key as an arrayref, to copy those
+    keys from the general config, into the config for the provider:
+
+        DEFAULT_ENCODING    => 'utf-8',
+        PROVIDERS => [
+            {
+                name    => 'Encoding',
+                copy_config => [qw(DEFAULT_ENCODING INCLUDE_PATH)]
+            }
+        ]
+
+    This can prove useful when you want to use the additional_template_paths
+    hack in your own provider, or if you need to use
+    Template::Provider::Encoding
 
   HELPERS
     The Catalyst::Helper::View::TT and Catalyst::Helper::View::TTSite helper

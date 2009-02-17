@@ -1,14 +1,28 @@
-# http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
-name:         Catalyst-View-TT
-version:      0.23
-version_from: lib/Catalyst/View/TT.pm
-installdirs:  site
-requires:
-    Catalyst:                      5.5
-    Path::Class:                   0
-    Template:                      0
-    Template::Timer:               0
-
+---
+abstract: 'Template View Class'
+author:
+  - 'Sebastian Riedel, C<sri@cpan.org>'
+build_requires:
+  Test::More: 0
 distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.30
+generated_by: 'Module::Install version 0.77'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Catalyst-View-TT
+no_index:
+  directory:
+    - inc
+    - t
+requires:
+  Catalyst: 5.7
+  Class::Accessor: 0
+  MRO::Compat: 0
+  Path::Class: 0
+  Template: 0
+  Template::Timer: 0
+  perl: 5.8.1
+resources:
+  license: http://dev.perl.org/licenses/
+version: 0.28
