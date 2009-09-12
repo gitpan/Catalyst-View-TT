@@ -2,7 +2,9 @@ NAME
     Catalyst::View::TT - Template View Class
 
 SYNOPSIS
-    # use the helper to create your View myapp_create.pl view TT TT
+    # use the helper to create your View
+
+        myapp_create.pl view TT TT
 
     # configure in lib/MyApp.pm (Could be set from configfile instead)
 
@@ -12,8 +14,8 @@ SYNOPSIS
             'View::TT' => {
                 # any TT configurations items go here
                 INCLUDE_PATH => [
-                  MyApp->path_to( 'root', 'src' ), 
-                  MyApp->path_to( 'root', 'lib' ), 
+                  MyApp->path_to( 'root', 'src' ),
+                  MyApp->path_to( 'root', 'lib' ),
                 ],
                 TEMPLATE_EXTENSION => '.tt',
                 CATALYST_VAR => 'c',
@@ -24,25 +26,26 @@ SYNOPSIS
             },
         );
 
-    # render view from lib/MyApp.pm or lib/MyApp::C::SomeController.pm
+    # render view from lib/MyApp.pm or
+    lib/MyApp::Controller::SomeController.pm
 
         sub message : Global {
             my ( $self, $c ) = @_;
             $c->stash->{template} = 'message.tt2';
             $c->stash->{message}  = 'Hello World!';
-            $c->forward('MyApp::V::TT');
+            $c->forward( $c->view('TT') );
         }
 
     # access variables from template
 
         The message is: [% message %].
-        
-    # example when CATALYST_VAR is set to 'Catalyst'
-        Context is [% Catalyst %]          
-        The base is [% Catalyst.req.base %] 
-        The name is [% Catalyst.config.name %] 
-        
-    # example when CATALYST_VAR isn't set
+
+        # example when CATALYST_VAR is set to 'Catalyst'
+        Context is [% Catalyst %]
+        The base is [% Catalyst.req.base %]
+        The name is [% Catalyst.config.name %]
+
+        # example when CATALYST_VAR isn't set
         Context is [% c %]
         The base is [% base %]
         The name is [% name %]
@@ -56,14 +59,16 @@ DESCRIPTION
 
         $ script/myapp_create.pl view TT TT
 
-    This creates a MyApp::V::TT.pm module in the lib directory (again,
+    This creates a MyApp::View::TT.pm module in the lib directory (again,
     replacing "MyApp" with the name of your application) which looks
     something like this:
 
-        package FooBar::V::TT;
-        
-    use strict;
-         use base 'Catalyst::View::TT';
+        package FooBar::View::TT;
+
+        use strict;
+        use warnings;
+
+        use base 'Catalyst::View::TT';
 
         __PACKAGE__->config->{DEBUG} = 'all';
 
@@ -73,10 +78,10 @@ DESCRIPTION
     to the TT view class.
 
         # In MyApp or MyApp::Controller::SomeController
-        
-    sub end : Private {
+
+        sub end : Private {
             my( $self, $c ) = @_;
-            $c->forward('MyApp::V::TT');
+            $c->forward( $c->view('TT') );
         }
 
   CONFIGURATION
@@ -84,12 +89,12 @@ DESCRIPTION
     way is to call the "config()" method in the view subclass. This happens
     when the module is first loaded.
 
-        package MyApp::V::TT;
-        
-    use strict;
+        package MyApp::View::TT;
+
+        use strict;
         use base 'Catalyst::View::TT';
 
-        MyApp::V::TT->config({
+        MyApp::View::TT->config({
             INCLUDE_PATH => [
                 MyApp->path_to( 'root', 'templates', 'lib' ),
                 MyApp->path_to( 'root', 'templates', 'src' ),
@@ -118,21 +123,21 @@ DESCRIPTION
         }
 
     The final, and perhaps most direct way, is to define a class item in
-    your main application configuration, again by calling the uniquitous
+    your main application configuration, again by calling the ubiquitous
     "config()" method. The items in the class hash are added to those
     already defined by the above two methods. This happens in the base class
     new() method (which is one reason why you must remember to call it via
     "MRO::Compat" if you redefine the "new()" method in a subclass).
 
         package MyApp;
-        
-    use strict;
+
+        use strict;
         use Catalyst;
-        
-    MyApp->config({
+
+        MyApp->config({
             name     => 'MyApp',
             root     => MyApp->path_to('root'),
-            'V::TT' => {
+            'View::TT' => {
                 INCLUDE_PATH => [
                     MyApp->path_to( 'root', 'templates', 'lib' ),
                     MyApp->path_to( 'root', 'templates', 'src' ),
@@ -184,7 +189,7 @@ DESCRIPTION
         sub message : Global {
             my ( $self, $c ) = @_;
             $c->stash->{template} = 'message.tt2';
-            $c->forward('MyApp::V::TT');
+            $c->forward( $c->view('TT') );
         }
 
     If a stash item isn't defined, then it instead uses the stringification
@@ -199,7 +204,7 @@ DESCRIPTION
             my ( $self, $c ) = @_;
             $c->stash->{template} = 'message.tt2';
             $c->stash->{message}  = 'Hello World!';
-            $c->forward('MyApp::V::TT');
+            $c->forward( $c->view('TT') );
         }
 
     A number of other template variables are also added:
@@ -225,8 +230,8 @@ DESCRIPTION
 
       sub send_email : Local {
         my ($self, $c) = @_;
-        
-    $c->email(
+
+        $c->email(
           header => [
             To      => 'me@localhost',
             Subject => 'A TT Email',
@@ -250,7 +255,7 @@ DESCRIPTION
 
   process
     Renders the template specified in "$c->stash->{template}" or
-    "$c->action" (the private name of the matched action. Calls render to
+    "$c->action" (the private name of the matched action). Calls render to
     perform actual rendering. Output is stored in "$c->response->body".
 
   render($c, $template, \%args)
@@ -290,7 +295,7 @@ DESCRIPTION
         MyApp->config({
             name     => 'MyApp',
             root     => MyApp->path_to('root'),
-            'V::TT' => {
+            'View::TT' => {
                 CATALYST_VAR => 'Catalyst',
             },
         });
@@ -322,7 +327,7 @@ DESCRIPTION
 
     For example:
 
-      package MyApp::C::Test;
+      package MyApp::Controller::Test;
       sub test : Local { .. }
 
     Would by default look for a template in <root>/test/test. If you set
@@ -334,7 +339,7 @@ DESCRIPTION
         MyApp->config({
             name     => 'MyApp',
             root     => MyApp->path_to('root'),
-            'V::TT' => {
+            'View::TT' => {
                 PROVIDERS => [
                     {
                         name    => 'DBI',
@@ -387,6 +392,15 @@ DESCRIPTION
     creates a default set of templates to get you started. It also
     configures the view module to locate the templates automatically.
 
+NOTES
+    If you are using the CGI module inside your templates, you will
+    experience that the Catalyst server appears to hang while rendering the
+    web page. This is due to the debug mode of CGI (which is waiting for
+    input in the terminal window). Turning off the debug mode using the
+    "-no_debug" option solves the problem, eg.:
+
+        [% USE CGI('-no_debug') %]
+
 SEE ALSO
     Catalyst, Catalyst::Helper::View::TT, Catalyst::Helper::View::TTSite,
     Template::Manual
@@ -401,6 +415,6 @@ AUTHORS
     Andy Wardley, "abw@cpan.org"
 
 COPYRIGHT
-    This program is free software, you can redistribute it and/or modify it
+    This program is free software. You can redistribute it and/or modify it
     under the same terms as Perl itself.
 

@@ -27,6 +27,7 @@ t/07render.t
 t/08cycle.t
 t/09providers.t
 t/10providers.encoding.t
+t/11norequest.t
 t/lib/TestApp.pm
 t/lib/TestApp/FauxProvider.pm
 t/lib/TestApp/root/specified_template.tt
