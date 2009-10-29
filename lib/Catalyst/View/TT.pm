@@ -9,7 +9,7 @@ use Template;
 use Template::Timer;
 use MRO::Compat;
 
-our $VERSION = '0.30';
+our $VERSION = '0.31';
 
 __PACKAGE__->mk_accessors('template');
 __PACKAGE__->mk_accessors('include_path');
@@ -478,11 +478,18 @@ See L<C<TIMER>> property of the L<config> method.
 The constructor for the TT view. Sets up the template provider,
 and reads the application config.
 
-=head2 process
+=head2 process($c)
 
 Renders the template specified in C<< $c->stash->{template} >> or
 C<< $c->action >> (the private name of the matched action).  Calls L<render> to
 perform actual rendering. Output is stored in C<< $c->response->body >>.
+
+It is possible to forward to the process method of a TT view from inside
+Catalyst like this:
+
+    $c->forward('View::TT');
+
+N.B. This is usually done automatically by L<Catalyst::Action::RenderView>.
 
 =head2 render($c, $template, \%args)
 
@@ -501,8 +508,13 @@ C<$template> can be anything that Template::process understands how to
 process, including the name of a template file or a reference to a test string.
 See L<Template::process|Template/process> for a full list of supported formats.
 
-To use the render method outside of your Catalyst app, just pass a undef context. 
+To use the render method outside of your Catalyst app, just pass a undef context.
 This can be useful for tests, for instance.
+
+It is possible to forward to the render method of a TT view from inside Catalyst
+to render page fragments like this:
+
+    my $fragment = $c->forward("View::TT", "render", $template_name, $c->stash->{fragment_data});
 
 =head2 template_vars
 

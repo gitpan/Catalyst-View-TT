@@ -253,10 +253,17 @@ DESCRIPTION
     The constructor for the TT view. Sets up the template provider, and
     reads the application config.
 
-  process
+  process($c)
     Renders the template specified in "$c->stash->{template}" or
     "$c->action" (the private name of the matched action). Calls render to
     perform actual rendering. Output is stored in "$c->response->body".
+
+    It is possible to forward to the process method of a TT view from inside
+    Catalyst like this:
+
+        $c->forward('View::TT');
+
+    N.B. This is usually done automatically by Catalyst::Action::RenderView.
 
   render($c, $template, \%args)
     Renders the given template and returns output, or a Template::Exception
@@ -273,6 +280,14 @@ DESCRIPTION
     $template can be anything that Template::process understands how to
     process, including the name of a template file or a reference to a test
     string. See Template::process for a full list of supported formats.
+
+    To use the render method outside of your Catalyst app, just pass a undef
+    context. This can be useful for tests, for instance.
+
+    It is possible to forward to the render method of a TT view from inside
+    Catalyst to render page fragments like this:
+
+        my $fragment = $c->forward("View::TT", "render", $template_name, $c->stash->{fragment_data});
 
   template_vars
     Returns a list of keys/values to be used as the catalyst variables in
