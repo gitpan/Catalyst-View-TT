@@ -70,7 +70,7 @@ DESCRIPTION
 
         use base 'Catalyst::View::TT';
 
-        __PACKAGE__->config->{DEBUG} = 'all';
+        __PACKAGE__->config(DEBUG => 'all');
 
     Now you can modify your action handlers in the main application and/or
     controllers to forward to your view class. You might choose to do this
@@ -83,6 +83,30 @@ DESCRIPTION
             my( $self, $c ) = @_;
             $c->forward( $c->view('TT') );
         }
+
+    But if you are using the standard auto-generated end action, you don't
+    even need to do this!
+
+        # in MyApp::Controller::Root
+        sub end : ActionClass('RenderView') {} # no need to change this line
+
+        # in MyApp.pm
+        __PACKAGE__->config(
+            ...
+            default_view => 'TT',
+        );
+
+    This will Just Work. And it has the advantages that:
+
+    *   If you want to use a different view for a given request, just set <<
+        $c->stash->{current_view} >>. (See Catalyst's "$c->view" method for
+        details.
+
+    *   << $c->res->redirect >> is handled by default. If you just forward
+        to "View::TT" in your "end" routine, you could break this by sending
+        additional content.
+
+    See Catalyst::Action::RenderView for more details.
 
   CONFIGURATION
     There are a three different ways to configure your view class. The first
