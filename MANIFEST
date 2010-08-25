@@ -28,14 +28,17 @@ t/08cycle.t
 t/09providers.t
 t/10providers.encoding.t
 t/11norequest.t
+t/12expose_methods.t
 t/lib/TestApp.pm
 t/lib/TestApp/Controller/Root.pm
 t/lib/TestApp/FauxProvider.pm
+t/lib/TestApp/root/expose_methods.tt
 t/lib/TestApp/root/specified_template.tt
 t/lib/TestApp/root/test.tt
 t/lib/TestApp/root/test_include_path/testpath.tt
 t/lib/TestApp/View/TT/Appconfig.pm
 t/lib/TestApp/View/TT/Encoding.pm
+t/lib/TestApp/View/TT/ExposeMethods.pm
 t/lib/TestApp/View/TT/Includepath.pm
 t/lib/TestApp/View/TT/Includepath2.pm
 t/lib/TestApp/View/TT/Includepath3.pm
