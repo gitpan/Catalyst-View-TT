@@ -314,7 +314,7 @@ DESCRIPTION
 
     For example:
 
-      expose_methods => [qw/uri_for_static/],
+      expose_methods => [qw/uri_for_css/],
 
       ...
 
