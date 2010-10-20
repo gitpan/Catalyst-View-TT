@@ -10,7 +10,8 @@ use Template::Timer;
 use MRO::Compat;
 use Scalar::Util qw/blessed weaken/;
 
-our $VERSION = '0.35';
+our $VERSION = '0.36';
+$VERSION = eval $VERSION;
 
 __PACKAGE__->mk_accessors('template');
 __PACKAGE__->mk_accessors('expose_methods');
@@ -278,7 +279,7 @@ sub template_vars {
     if ($self->expose_methods) {
         my $meta = $self->meta;
         foreach my $method_name (@{$self->expose_methods}) {
-            my $method = $meta->get_method( $method_name );
+            my $method = $meta->find_method_by_name( $method_name );
             unless ($method) {
                 Catalyst::Exception->throw( "$method_name not found in TT view" );
             }

@@ -39,6 +39,7 @@ t/lib/TestApp/root/test_include_path/testpath.tt
 t/lib/TestApp/View/TT/Appconfig.pm
 t/lib/TestApp/View/TT/Encoding.pm
 t/lib/TestApp/View/TT/ExposeMethods.pm
+t/lib/TestApp/View/TT/ExposeMethodsSubclassed.pm
 t/lib/TestApp/View/TT/Includepath.pm
 t/lib/TestApp/View/TT/Includepath2.pm
 t/lib/TestApp/View/TT/Includepath3.pm
