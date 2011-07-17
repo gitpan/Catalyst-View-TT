@@ -414,6 +414,25 @@ DESCRIPTION
     hack in your own provider, or if you need to use
     Template::Provider::Encoding
 
+  "CLASS"
+    Allows you to specify a custom class to use as the template class
+    instead of Template.
+
+        package MyApp::View::Web;
+
+        use strict;
+        use base 'Catalyst::View::TT';
+
+        use Template::AutoFilter;
+
+        __PACKAGE__->config({
+            CLASS => 'Template::AutoFilter',
+        });
+
+    This is useful if you want to use your own subclasses of Template, so
+    you can, for example, prevent XSS by automatically filtering all output
+    through "| html".
+
   HELPERS
     The Catalyst::Helper::View::TT and Catalyst::Helper::View::TTSite helper
     modules are provided to create your view module. There are invoked by

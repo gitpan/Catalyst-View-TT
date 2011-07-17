@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::View::TT.
 
+0.37   2011-07-17 09:20:00
+        - Allow setting of TT class rather than forcing 'Template'
+
 0.36   2010-10-19 15:00:00
         - Fixed subclassing when using expose_methods
 
