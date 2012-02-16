@@ -10,7 +10,7 @@ use Template::Timer;
 use MRO::Compat;
 use Scalar::Util qw/blessed weaken/;
 
-our $VERSION = '0.37';
+our $VERSION = '0.38';
 $VERSION = eval $VERSION;
 
 __PACKAGE__->mk_accessors('template');
@@ -33,18 +33,26 @@ Catalyst::View::TT - Template View Class
 
     __PACKAGE__->config(
         # any TT configuration items go here
-        INCLUDE_PATH => [
-          MyApp->path_to( 'root', 'src' ),
-          MyApp->path_to( 'root', 'lib' ),
-        ],
         TEMPLATE_EXTENSION => '.tt',
         CATALYST_VAR => 'c',
         TIMER        => 0,
+        ENCODING     => 'utf-8'
         # Not set by default
         PRE_PROCESS        => 'config/main',
         WRAPPER            => 'site/wrapper',
         render_die => 1, # Default for new apps, see render method docs
         expose_methods => [qw/method_in_view_class/],
+    );
+
+# add include path configuration in MyApp.pm
+
+    __PACKAGE__->config(
+        'View::Web' => {
+            INCLUDE_PATH => [
+                __PACKAGE__->path_to( 'root', 'src' ),
+                __PACKAGE__->path_to( 'root', 'lib' ),
+            ],
+        },
     );
 
 # render view from lib/MyApp.pm or lib/MyApp::Controller::SomeController.pm
@@ -318,11 +326,9 @@ replacing C<MyApp> with the name of your application) which looks
 something like this:
 
     package FooBar::View::Web;
+    use Moose;
 
-    use strict;
-    use warnings;
-
-    use base 'Catalyst::View::TT';
+    extends 'Catalyst::View::TT';
 
     __PACKAGE__->config(DEBUG => 'all');
 
@@ -377,22 +383,32 @@ first way is to call the C<config()> method in the view subclass.  This
 happens when the module is first loaded.
 
     package MyApp::View::Web;
-
-    use strict;
-    use base 'Catalyst::View::TT';
+    use Moose;
+    extends 'Catalyst::View::TT';
 
     __PACKAGE__->config({
-        INCLUDE_PATH => [
-            MyApp->path_to( 'root', 'templates', 'lib' ),
-            MyApp->path_to( 'root', 'templates', 'src' ),
-        ],
         PRE_PROCESS  => 'config/main',
         WRAPPER      => 'site/wrapper',
     });
 
 You may also override the configuration provided in the view class by adding
-a 'View::Web' section to your application config (either in the application
-main class, or in your configuration file). This should be reserved for
+a 'View::Web' section to your application config.
+
+This should generally be used to inject the include paths into the view to
+avoid the view trying to load the application to resolve paths.
+
+    .. inside MyApp.pm ..
+    __PACKAGE__->config(
+        'View::Web' => {
+            INCLUDE_PATH => [
+                __PACKAGE__->path_to( 'root', 'templates', 'lib' ),
+                __PACKAGE__->path_to( 'root', 'templates', 'src' ),
+            ],
+        },
+    );
+
+You can also configure your view from within your config file if you're
+using L<Catalyst::Plugin::ConfigLoader>. This should be reserved for
 deployment-specific concerns. For example:
 
     # MyApp_local.conf (Config::General format)
@@ -434,6 +450,12 @@ checking and the chance of a memory leak:
 If you are calling C<render> directly then you can specify dynamic paths by
 having a C<additional_template_paths> key with a value of additonal directories
 to search. See L<CAPTURING TEMPLATE OUTPUT> for an example showing this.
+
+=head2 Unicode
+
+Be sure to set C<< ENCODING => 'utf-8' >> and use
+L<Catalyst::Plugin::Unicode::Encoding> if you want to use non-ascii
+characters (encoded as utf-8) in your templates.
 
 =head2 RENDERING VIEWS
 
@@ -647,7 +669,7 @@ Would by default look for a template in <root>/test/test. If you set TEMPLATE_EX
 
 Allows you to specify the template providers that TT will use.
 
-    MyApp->config({
+    MyApp->config(
         name     => 'MyApp',
         root     => MyApp->path_to('root'),
         'View::Web' => {
@@ -664,7 +686,7 @@ Allows you to specify the template providers that TT will use.
                 }
             ]
         },
-    });
+    );
 
 The 'name' key should correspond to the class name of the provider you
 want to use.  The _file_ name is a special case that represents the default
@@ -694,9 +716,8 @@ Allows you to specify a custom class to use as the template class instead of
 L<Template>.
 
     package MyApp::View::Web;
-
-    use strict;
-    use base 'Catalyst::View::TT';
+    use Moose;
+    extends 'Catalyst::View::TT';
 
     use Template::AutoFilter;
 
