@@ -1,5 +1,10 @@
 Revision history for Perl extension Catalyst::View::TT.
 
+0.39   2012-04-11 07:40:00
+        - Fix warning from tests. RT#75104
+        - Fix ExtUtils::MakeMaker version requirement (due to last release
+          being made with faulty Module::Install). RT#76488
+
 0.38   2012-02-15 20:42:00
         - Change documentation to reflect use of Moose.
         - Change documentation to highlight how to configure

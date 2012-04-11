@@ -48,8 +48,8 @@ sub test_render : Local {
 sub test_msg : Local {
     my ($self, $c) = @_;
     my $tmpl = $c->req->param('msg');
-    
-    $c->stash->{message} = $c->view('TT::AppConfig')->render($c, \$tmpl);
+
+    $c->stash->{message} = $c->view('TT::Appconfig')->render($c, \$tmpl);
     $c->stash->{template} = 'test.tt';
 }
 

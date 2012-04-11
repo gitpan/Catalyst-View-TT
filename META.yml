@@ -3,13 +3,13 @@ abstract: 'Template View Class'
 author:
   - 'Sebastian Riedel, C<sri@cpan.org>'
 build_requires:
-  ExtUtils::MakeMaker: 6.6302
+  ExtUtils::MakeMaker: 6.59
   Test::More: 0
 configure_requires:
-  ExtUtils::MakeMaker: 6.6302
+  ExtUtils::MakeMaker: 6.59
 distribution_type: module
 dynamic_config: 1
-generated_by: 'Module::Install version 1.04'
+generated_by: 'Module::Install version 1.05'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -30,4 +30,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://git.shadowcat.co.uk/catagits/Catalyst-View-TT.git
-version: 0.38
+version: 0.39
