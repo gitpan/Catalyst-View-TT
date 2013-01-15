@@ -1,5 +1,8 @@
 Revision history for Perl extension Catalyst::View::TT.
 
+0.40   2013-01-15 20:52:14
+        - Fix hash randomisation breakage in tests (RT#82703)
+
 0.39   2012-04-11 07:40:00
         - Fix warning from tests. RT#75104
         - Fix ExtUtils::MakeMaker version requirement (due to last release

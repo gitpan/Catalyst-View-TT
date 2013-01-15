@@ -10,7 +10,7 @@ use Template::Timer;
 use MRO::Compat;
 use Scalar::Util qw/blessed weaken/;
 
-our $VERSION = '0.39';
+our $VERSION = '0.40';
 $VERSION = eval $VERSION;
 
 __PACKAGE__->mk_accessors('template');
@@ -265,7 +265,7 @@ sub render {
             die $self->template->error if $self->{render_die};
             return $self->template->error;
         }
-        $c->log->debug('The Catalyst::View::TT render() method will start dying on error in a future release. Unless you are calling the render() method manually, you probably want the new behaviour, so set render_die => 1 in config for ' . blessed($self) . '. If you wish to continue to return the exception rather than throwing it, add render_die => 0 to your config.') if $c->debug;
+        $c->log->debug('The Catalyst::View::TT render() method will start dying on error in a future release. Unless you are calling the render() method manually, you probably want the new behaviour, so set render_die => 1 in config for ' . blessed($self) . '. If you wish to continue to return the exception rather than throwing it, add render_die => 0 to your config.') if $c && $c->debug;
         return $self->template->error;
     }
     return $output;

@@ -7,6 +7,6 @@ use lib "$FindBin::Bin/lib";
 
 BEGIN { use_ok 'TestApp' or die }
 
-ok my $tt = TestApp->view('TT'), 'Get TT view object';
+ok my $tt = TestApp->view, 'Get TT view object';
 is $tt->render(undef, 'test.tt', { message => 'hello' }), 'hello',
     'render() should return the template output';
