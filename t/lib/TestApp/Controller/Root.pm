@@ -53,6 +53,12 @@ sub test_msg : Local {
     $c->stash->{template} = 'test.tt';
 }
 
+sub test_alt_content_type : Local {
+    my ($self, $c) = @_;
+    $c->stash( message => 'test_alt_content_type');
+    $c->forward('View::TT::AltContentType');
+}
+
 sub end : Private {
     my ($self, $c) = @_;
 

@@ -351,6 +351,17 @@ DESCRIPTION
 
       [% uri_for_css('home.css') %]
 
+  content_type
+    This lets you override the default content type for the response. If you
+    do not set this and if you do not set the content type in your
+    controllers, the default is "text/html; charset=utf-8".
+
+    Use this if you are creating alternative view responses, such as text or
+    JSON and want a global setting.
+
+    Any content type set in your controllers before calling this view are
+    respected and have priority.
+
   "CATALYST_VAR"
     Allows you to change the name of the Catalyst context object. If set, it
     will also remove the base and name aliases, so you will have access them

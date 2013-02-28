@@ -10,12 +10,13 @@ use Template::Timer;
 use MRO::Compat;
 use Scalar::Util qw/blessed weaken/;
 
-our $VERSION = '0.40';
+our $VERSION = '0.41';
 $VERSION = eval $VERSION;
 
 __PACKAGE__->mk_accessors('template');
 __PACKAGE__->mk_accessors('expose_methods');
 __PACKAGE__->mk_accessors('include_path');
+__PACKAGE__->mk_accessors('content_type');
 
 *paths = \&include_path;
 
@@ -229,7 +230,8 @@ sub process {
     }
 
     unless ( $c->response->content_type ) {
-        $c->response->content_type('text/html; charset=utf-8');
+        my $default = $self->content_type || 'text/html; charset=utf-8';
+        $c->response->content_type($default);
     }
 
     $c->response->body($output);
@@ -623,6 +625,18 @@ For example:
 Then in the template:
 
   [% uri_for_css('home.css') %]
+
+=head2 content_type
+
+This lets you override the default content type for the response.  If you do
+not set this and if you do not set the content type in your controllers, the
+default is C<text/html; charset=utf-8>.
+
+Use this if you are creating alternative view responses, such as text or JSON
+and want a global setting.
+
+Any content type set in your controllers before calling this view are respected
+and have priority.
 
 =head2 C<CATALYST_VAR>
 
