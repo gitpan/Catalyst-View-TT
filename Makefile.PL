@@ -17,6 +17,7 @@ requires 'Path::Class'     => 0;
 requires 'MRO::Compat'     => 0;
 
 test_requires 'Test::More';
+test_requires 'File::Spec';
 
 auto_install;
 resources repository => 'git://git.shadowcat.co.uk/catagits/Catalyst-View-TT.git';

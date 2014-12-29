@@ -52,3 +52,5 @@ t/lib/TestApp/View/TT/Includepath2.pm
 t/lib/TestApp/View/TT/Includepath3.pm
 t/lib/TestApp/View/TT/Pkgconfig.pm
 t/lib/TestApp/View/TT/Providerconfig.pm
+t/root/heart
+t/utf8.t

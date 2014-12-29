@@ -6,7 +6,7 @@ SYNOPSIS
 
         myapp_create.pl view Web TT
 
-    # add custom configration in View/Web.pm
+    # add custom configuration in View/Web.pm
 
         __PACKAGE__->config(
             # any TT configuration items go here
@@ -187,14 +187,44 @@ DESCRIPTION
         @{ $c->view('Web')->include_path } = qw/path another_path/;
 
     If you are calling "render" directly then you can specify dynamic paths
-    by having a "additional_template_paths" key with a value of additonal
+    by having a "additional_template_paths" key with a value of additional
     directories to search. See "CAPTURING TEMPLATE OUTPUT" for an example
     showing this.
 
-  Unicode
+  Unicode (pre Catalyst v5.90080)
+    NOTE Starting with Catalyst v5.90080 unicode and encoding has been baked
+    into core, and the default encoding is UTF-8. The following advice is
+    for older versions of Catalyst.
+
     Be sure to set "ENCODING => 'utf-8'" and use
     Catalyst::Plugin::Unicode::Encoding if you want to use non-ascii
-    characters (encoded as utf-8) in your templates.
+    characters (encoded as utf-8) in your templates. This is only needed if
+    you actually have UTF8 literals in your templates and the BOM is not
+    properly set. Setting encoding here does not magically encode your
+    template output. If you are using this version of Catalyst you need to
+    all the Unicode plugin, or upgrade (preferred)
+
+  Unicode (Catalyst v5.90080+)
+    This version of Catalyst will automatically encode your body output to
+    UTF8. This means if your variables contain multibyte characters you
+    don't need top do anything else to get UTF8 output. However if your
+    templates contain UTF8 literals (like, multibyte characters actually in
+    the template text), then you do need to either set the BOM mark on the
+    template file or instruct TT to decode the templates at load time via
+    the ENCODING configuration setting. Most of the time you can just do:
+
+        MyApp::View::HTML->config(
+            ENCODING => 'UTF-8');
+
+    and that will just take care of everything. This configuration setting
+    will force Template to decode all files correctly, so that when you hit
+    the finalize_encoding step we can properly encode the body as UTF8. If
+    you fail to do this you will get double encoding issues in your output
+    (but again, only for the UTF8 literals in your actual template text.)
+
+    Again, this ENCODING configuration setting only instructs template
+    toolkit how (and if) to decode the contents of your template files when
+    reading them from disk. It has no other effect.
 
   RENDERING VIEWS
     The view plugin renders the template specified in the "template" item in
@@ -390,8 +420,8 @@ DESCRIPTION
         <!-- TIMER END: process mainmenu/footer.tt (0.003016 seconds) -->
 
   "TEMPLATE_EXTENSION"
-    a sufix to add when looking for templates bases on the "match" method in
-    Catalyst::Request.
+    a suffix to add when looking for templates bases on the "match" method
+    in Catalyst::Request.
 
     For example:
 

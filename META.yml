@@ -4,12 +4,13 @@ author:
   - 'Sebastian Riedel, C<sri@cpan.org>'
 build_requires:
   ExtUtils::MakeMaker: 6.59
+  File::Spec: 0
   Test::More: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.59
 distribution_type: module
 dynamic_config: 1
-generated_by: 'Module::Install version 1.06'
+generated_by: 'Module::Install version 1.14'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -20,7 +21,7 @@ no_index:
     - inc
     - t
 requires:
-  Catalyst: 5.7
+  Catalyst: '5.7'
   Class::Accessor: 0
   MRO::Compat: 0
   Path::Class: 0
@@ -30,4 +31,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://git.shadowcat.co.uk/catagits/Catalyst-View-TT.git
-version: 0.41
+version: '0.42'
